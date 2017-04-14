@@ -1,22 +1,18 @@
 <?php
 
-// require __DIR__ . '/Sms.php';
-require __DIR__ . '/providers/FortDigitalSmsProvider.php';
+require_once __DIR__ . '/vendor/autoload.php';
+
+use Wzulfikar\Sms\Driver\FortDigital;
+use Wzulfikar\Sms\SmsProvider;
 
 $config = [
     'sender' => 'put-sender-here',
     'username' => 'your-username-here',
-    'password' => 'your-password-here',
+    'password' => 'your-pass-here',
 ];
 
-$class = 'FortDigitalSmsProvider';
-$interface = 'SmsInterface';
+// test using fort digital driver
+$sms = SmsProvider::make(FortDigital::class, $config);
 
-if (!(new ReflectionClass($class))->implementsInterface($interface)) {
-    throw new Exception("$class must implemenst $interface");
-}
-
-$sms = new $class;
-$sms->config($config);
 var_dump($sms->getStatus(2332));
 var_dump($sms->getBalance());

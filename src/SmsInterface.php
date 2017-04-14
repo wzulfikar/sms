@@ -1,5 +1,7 @@
 <?php
 
+namespace Wzulfikar\Sms;
+
 interface SmsInterface
 {
     /**

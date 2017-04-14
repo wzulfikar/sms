@@ -1,8 +1,13 @@
 <?php
 
-require __DIR__. '/../SmsInterface.php';
+namespace Wzulfikar\Sms\Driver;
 
-class FortDigitalSmsProvider implements SmsInterface
+use Wzulfikar\Sms\SmsInterface;
+
+/**
+ * see: www.fortdigital.com.sg
+ */
+class FortDigital implements SmsInterface
 {
     private $base_url = 'https://mx.fortdigital.net';
     private $endpoints  = [
@@ -101,7 +106,7 @@ class FortDigitalSmsProvider implements SmsInterface
     {
         $resp = $this->fetchAndParse($this->endpoints['balance']);
         return [
-            'username' => $this->username,
+            'user' => $this->username,
             'balance' => trim((int)$resp[1])
         ];
     }
