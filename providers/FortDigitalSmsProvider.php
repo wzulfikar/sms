@@ -1,19 +1,21 @@
 <?php
 
-class Sms
+require __DIR__. '/../SmsInterface.php';
+
+class FortDigitalSmsProvider implements SmsInterface
 {
+    private $base_url = 'https://mx.fortdigital.net';
     private $endpoints  = [
         'send'    => '/http/send-message',
         'status'  => '/http/request-status-update',
         'balance' => '/http/balance-sms',
     ];
-    private $base_url;
+
     private $username;
     private $password;
 
     public function config(array $opts)
     {
-        $this->base_url = $opts['base_url'];
         $this->sender = $opts['sender'];
         $this->username = $opts['username'];
         $this->password = $opts['password'];
@@ -59,12 +61,6 @@ class Sms
         return $this->parseResponse($resp);
     }
 
-    /**
-     * Send message to given phone number
-     * @param  string $message message that will be sent
-     * @param  string $phone   recipient's phone number
-     * @return array           status of message and its id
-     */
     public function send($message, $phone)
     {
         $params = [
@@ -90,21 +86,23 @@ class Sms
 
         $resp = $this->fetchAndParse($this->endpoints['status'], $params);
         
-        $resp_arr = [
+        return [
             'status' => strtolower($resp[0]),
             'msg' => trim($resp[1])
         ];
-        return json_encode($resp_arr);
     }
 
     /**
      * Get balance of sms from provider
      *
-     * @return int
+     * @return array    array of username & its balance
      */
     public function getBalance()
     {
         $resp = $this->fetchAndParse($this->endpoints['balance']);
-        return trim((int)$resp[1]);
+        return [
+            'username' => $this->username,
+            'balance' => trim((int)$resp[1])
+        ];
     }
 }
