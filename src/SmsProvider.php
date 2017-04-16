@@ -6,6 +6,10 @@ use Wzulfikar\Sms\SmsInterface;
 
 class SmsProvider
 {
+    private function __construct()
+    {
+    }
+
     public static function make($driver, array $config)
     {
         $interface = SmsInterface::class;
