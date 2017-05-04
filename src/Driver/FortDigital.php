@@ -9,8 +9,8 @@ use Wzulfikar\Sms\SmsInterface;
  */
 class FortDigital implements SmsInterface
 {
-    private $base_url = 'https://mx.fortdigital.net';
-    private $endpoints  = [
+    private $base_url  = 'https://mx.fortdigital.net';
+    private $endpoints = [
         'send'    => '/http/send-message',
         'status'  => '/http/request-status-update',
         'balance' => '/http/balance-sms',
@@ -21,7 +21,7 @@ class FortDigital implements SmsInterface
 
     public function config(array $opts)
     {
-        $this->sender = $opts['sender'];
+        $this->sender   = $opts['sender'];
         $this->username = $opts['username'];
         $this->password = $opts['password'];
     }
@@ -59,7 +59,7 @@ class FortDigital implements SmsInterface
         $endpoint = $this->makeEndpoint($path, $params);
         return file_get_contents($endpoint);
     }
-    
+
     private function fetchAndParse($path, array $params = [])
     {
         $resp = $this->fetch($path, $params);
@@ -74,26 +74,26 @@ class FortDigital implements SmsInterface
             'message' => htmlspecialchars($message),
         ];
 
-        $sent = $this->fetchAndParse($this->endpoints['send-message'], $params);
+        $sent = $this->fetchAndParse($this->endpoints['send'], $params);
 
         //$sendSms = explode(":","OK: utamastudio_10_9"); // for testing purpose
-        $status = trim($sent[0]);
+        $status     = trim($sent[0]);
         $message_id = trim($sent[1]);
- 
+
         return compact('message_id', 'status');
     }
 
     public function getStatus($message_id)
     {
         $params = [
-            'message-id' => $message_id
+            'message-id' => $message_id,
         ];
 
         $resp = $this->fetchAndParse($this->endpoints['status'], $params);
-        
+
         return [
             'status' => strtolower($resp[0]),
-            'msg' => trim($resp[1])
+            'msg'    => trim($resp[1]),
         ];
     }
 
@@ -106,8 +106,8 @@ class FortDigital implements SmsInterface
     {
         $resp = $this->fetchAndParse($this->endpoints['balance']);
         return [
-            'user' => $this->username,
-            'balance' => trim((int)$resp[1])
+            'user'    => $this->username,
+            'balance' => trim((int) $resp[1]),
         ];
     }
 }
