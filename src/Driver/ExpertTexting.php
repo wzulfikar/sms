@@ -5,15 +5,15 @@ namespace Wzulfikar\Sms\Driver;
 use Wzulfikar\Sms\SmsInterface;
 
 /**
- * see: www.fortdigital.com.sg
+ * see: https://www.experttexting.com/appv2/Documentation
  */
-class FortDigital implements SmsInterface
+class ExpertTexting implements SmsInterface
 {
-    private $base_url  = 'https://mx.fortdigital.net';
+    private $base_url  = 'https://www.experttexting.com/ExptRestApi/sms/json';
     private $endpoints = [
-        'send'    => '/http/send-message',
-        'status'  => '/http/request-status-update',
-        'balance' => '/http/balance-sms',
+        'send'    => '/Message/Send',
+        'status'  => '/Message/Status',
+        'balance' => '/Account/Balance',
     ];
 
     private $username;
@@ -24,6 +24,7 @@ class FortDigital implements SmsInterface
         $this->sender   = $opts['sender'];
         $this->username = $opts['username'];
         $this->password = $opts['password'];
+        $this->api_key  = $opts['api_key'];
     }
 
     private function makeEndpoint($path, array $params = [])
@@ -31,6 +32,7 @@ class FortDigital implements SmsInterface
         $params += [
             'username' => $this->username,
             'password' => $this->password,
+            'api_key'  => $this->api_key,
         ];
 
         return $this->base_url . $path . '?' . http_build_query($params);
@@ -40,11 +42,11 @@ class FortDigital implements SmsInterface
      * Parse response from endpoint
      *
      * @param  string $resp response
-     * @return array        array representation of response
+     * @return array        response in form of associative array
      */
     private function parseResponse(string $resp)
     {
-        return explode(":", $resp);
+        return json_decode($resp, true);
     }
 
     /**
@@ -69,54 +71,74 @@ class FortDigital implements SmsInterface
     public function send($message, $phone)
     {
         $params = [
-            'to'      => $phone,
-            'from'    => $this->sender,
-            'message' => htmlspecialchars($message),
+            'to'   => $phone,
+            'from' => $this->sender,
+            'text' => htmlspecialchars($message),
         ];
 
         $sent = $this->fetchAndParse($this->endpoints['send'], $params);
 
-        //$sendSms = explode(":","OK: utamastudio_10_9"); // for testing purpose
-        $status     = trim($sent[0]);
-        $message_id = trim($sent[1]);
+        $status     = $sent['Status'];
+        $message_id = $sent['Response']['message_id'];
 
         return compact('message_id', 'status');
     }
 
+    /**
+     * [getStatus description]
+     * @param  string $message_id [description]
+     * @return array             [description]
+     */
     public function getStatus($message_id)
     {
         $params = [
-            'message-id' => $message_id,
+            'message_id' => $message_id,
         ];
 
         $resp = $this->fetchAndParse($this->endpoints['status'], $params);
 
         $STATUSES   = SmsInterface::STATUS;
         $statusCode = $STATUSES['QUEUED'];
-        if ($resp[0] == 'success') {
+        if ($resp['Status'] == 0) {
             $statusCode = $STATUSES['SENT'];
-        } else if ($resp[0] == 'error') {
+        } else if ($resp['Status'] > 0) {
             $statusCode = $STATUSES['FAILED'];
         }
 
         return [
             'status' => $statusCode,
-            'msg'    => trim($resp[1]),
+            'msg'    => $resp['Response']['Status'],
             'raw'    => json_encode($resp),
         ];
     }
 
     /**
-     * Get balance of sms from provider
+     * Get status code of given message id
+     *
+     * @param  string $message_id [description]
+     * @return array             [description]
+     */
+    public function getStatusCode($message_id)
+    {
+        return [
+            'status' => $resp['Status'],
+            'msg'    => $resp['Response']['Status'],
+        ];
+    }
+
+    /**
+     * Get balance of sms from provider.
+     * ExpertTexting returns balance in USD, not in amount of sms.
      *
      * @return array    array of username & its balance
      */
     public function getBalance()
     {
         $resp = $this->fetchAndParse($this->endpoints['balance']);
+
         return [
             'user'    => $this->username,
-            'balance' => trim((int) $resp[1]),
+            'balance' => $resp['Response']['Balance'],
         ];
     }
 }
