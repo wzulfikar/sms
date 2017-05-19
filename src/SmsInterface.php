@@ -4,6 +4,12 @@ namespace Wzulfikar\Sms;
 
 interface SmsInterface
 {
+    const STATUS = [
+        'QUEUED' => 0,
+        'SENT'   => 1,
+        'FAILED' => 2,
+    ];
+
     /**
      * Send message to given phone number
      * @param  string $message message that will be sent
@@ -11,7 +17,7 @@ interface SmsInterface
      * @return array           status of message and its id
      */
     public function send($message, $to_phone);
-    
+
     /**
      * Set configuration of sms driver
      *
@@ -23,8 +29,9 @@ interface SmsInterface
     /**
      * Get status of a message
      *
-     * @param  mixed $message_id  message id from provider
-     * @return array              array representation of message's status
+     * @param  string $message_id  message id from provider
+     * @return array              array representation of message's status:
+     *                            (int) status, (string) msg, (json) raw
      */
     public function getStatus($message_id);
 
