@@ -74,13 +74,17 @@ class FortDigital implements SmsInterface
             'message' => htmlspecialchars($message),
         ];
 
-        $sent = $this->fetchAndParse($this->endpoints['send'], $params);
+        // for testing purpose
+        //$sendSms = explode(":","OK: message_id_10_9");
 
-        //$sendSms = explode(":","OK: utamastudio_10_9"); // for testing purpose
-        $status     = trim($sent[0]);
-        $message_id = trim($sent[1]);
+        $raw    = $this->fetchAndParse($this->endpoints['send'], $params);
+        $status = SmsInterface::STATUS['QUEUED'];
+        if (trim($raw[0]) == 'ERROR') {
+            $status = SmsInterface::STATUS['FAILED'];
+        }
+        $message_id = trim($raw[1]);
 
-        return compact('message_id', 'status');
+        return compact('status', 'message_id', 'raw');
     }
 
     public function getStatus($message_id)
@@ -93,9 +97,9 @@ class FortDigital implements SmsInterface
 
         $STATUSES   = SmsInterface::STATUS;
         $statusCode = $STATUSES['QUEUED'];
-        if ($resp[0] == 'success') {
+        if (strtolower($resp[0]) == 'success') {
             $statusCode = $STATUSES['SENT'];
-        } else if ($resp[0] == 'error') {
+        } else if (strtolower($resp[0]) == 'error') {
             $statusCode = $STATUSES['FAILED'];
         }
 
@@ -114,9 +118,14 @@ class FortDigital implements SmsInterface
     public function getBalance()
     {
         $resp = $this->fetchAndParse($this->endpoints['balance']);
+
+        if ($resp[0] == 'ERROR') {
+            throw new \Exception('Error in Driver/FortDigital: failed to get balance - ' . trim($resp[1]));
+        }
+
         return [
             'user'    => $this->username,
-            'balance' => trim((int) $resp[1]),
+            'balance' => intval(trim($resp[1])),
         ];
     }
 }

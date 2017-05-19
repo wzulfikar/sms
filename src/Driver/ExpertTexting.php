@@ -76,12 +76,14 @@ class ExpertTexting implements SmsInterface
             'text' => htmlspecialchars($message),
         ];
 
-        $sent = $this->fetchAndParse($this->endpoints['send'], $params);
+        $raw    = $this->fetchAndParse($this->endpoints['send'], $params);
+        $status = SmsInterface::STATUS['QUEUED'];
+        if ($raw['Status'] > 0) {
+            $status = SmsInterface::STATUS['FAILED'];
+        }
+        $message_id = isset($raw['Response']['message_id']) ? $raw['Response']['message_id'] : null;
 
-        $status     = $sent['Status'];
-        $message_id = $sent['Response']['message_id'];
-
-        return compact('message_id', 'status');
+        return compact('status', 'message_id', 'raw');
     }
 
     /**
@@ -107,22 +109,8 @@ class ExpertTexting implements SmsInterface
 
         return [
             'status' => $statusCode,
-            'msg'    => $resp['Response']['Status'],
+            'msg'    => isset($resp['Response']['Status']) ? $resp['Response']['Status'] : $resp['ErrorMessage'],
             'raw'    => json_encode($resp),
-        ];
-    }
-
-    /**
-     * Get status code of given message id
-     *
-     * @param  string $message_id [description]
-     * @return array             [description]
-     */
-    public function getStatusCode($message_id)
-    {
-        return [
-            'status' => $resp['Status'],
-            'msg'    => $resp['Response']['Status'],
         ];
     }
 
@@ -136,9 +124,19 @@ class ExpertTexting implements SmsInterface
     {
         $resp = $this->fetchAndParse($this->endpoints['balance']);
 
+        if ($resp['Status'] > 0) {
+            $this->throwError('Failed to get balance', $resp);
+        }
+
         return [
             'user'    => $this->username,
             'balance' => $resp['Response']['Balance'],
         ];
+    }
+
+    private function throwError($title, $resp)
+    {
+        $msg = sprintf('Error in Driver/ExpertTexting: %s - %s', $title, $resp['ErrorMessage']);
+        throw new \Exception($msg);
     }
 }

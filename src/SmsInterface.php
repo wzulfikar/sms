@@ -14,7 +14,8 @@ interface SmsInterface
      * Send message to given phone number
      * @param  string $message message that will be sent
      * @param  string $phone   recipient's phone number
-     * @return array           status of message and its id
+     * @return array           status of message and its id:
+     *                         (int) status, (string) message_id, (json) raw
      */
     public function send($message, $to_phone);
 
