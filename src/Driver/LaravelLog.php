@@ -11,7 +11,7 @@ class LaravelLog implements SmsInterface
 {
     public function config(array $opts)
     {
-        $this->sender = $opts['sender'];
+        $this->sender   = $opts['sender'];
         $this->username = $opts['username'];
         $this->password = $opts['password'];
     }
@@ -26,23 +26,24 @@ class LaravelLog implements SmsInterface
 
         \Log::info('Sending message with params', $params);
 
-        $status = 1;
+        $status     = 1;
         $message_id = 1;
- 
+
         return compact('message_id', 'status');
     }
 
     public function getStatus($message_id)
     {
         $params = [
-            'message-id' => $message_id
+            'message-id' => $message_id,
         ];
 
         \Log::info('Getting status of message #' . $message_id);
-        
+
         return [
             'status' => 1,
-            'msg' => 1
+            'msg'    => 1,
+            'raw'    => 'raw result from sms provider',
         ];
     }
 
@@ -54,8 +55,8 @@ class LaravelLog implements SmsInterface
     public function getBalance()
     {
         $bal = [
-            'user' => $this->username,
-            'balance' => 100
+            'user'    => $this->username,
+            'balance' => 100,
         ];
         \Log::info('Getting balance', $bal);
         return $bal;
